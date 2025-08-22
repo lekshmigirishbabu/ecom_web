@@ -1,19 +1,34 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { Package, ShoppingCart, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function AdminDashboard() {
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalOrders: 0,
     lowStockItems: 0,
     totalSales: 0
   });
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        router.push('/auth/login');
+        return;
+      }
+
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+
       try {
         // Get total products
         const productsSnapshot = await getDocs(collection(db, 'products'));
@@ -23,69 +38,45 @@ export default function AdminDashboard() {
         const ordersSnapshot = await getDocs(collection(db, 'orders'));
         const totalOrders = ordersSnapshot.size;
 
-        // Calculate total sales
-        const totalSales = ordersSnapshot.docs.reduce((sum, doc) => {
-          return sum + (doc.data().total || 0);
-        }, 0);
+        // Total sales
+        const totalSales = ordersSnapshot.docs.reduce((sum, doc) => sum + (doc.data().total || 0), 0);
 
-        // Get low stock items (stock < 10)
-        const lowStockQuery = query(
-          collection(db, 'products'),
-          where('stock', '<', 10)
-        );
+        // Low stock items
+        const lowStockQuery = query(collection(db, 'products'), where('stock', '<', 10));
         const lowStockSnapshot = await getDocs(lowStockQuery);
         const lowStockItems = lowStockSnapshot.size;
 
-        setStats({
-          totalProducts,
-          totalOrders,
-          lowStockItems,
-          totalSales
-        });
+        setStats({ totalProducts, totalOrders, lowStockItems, totalSales });
       } catch (error) {
         console.error('Error fetching stats:', error);
       }
-    };
 
-    fetchStats();
-  }, []);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, [router]);
+
+  if (loading) {
+    return <div className="p-10">Loading...</div>;
+  }
 
   const statCards = [
-    {
-      title: 'Total Products',
-      value: stats.totalProducts,
-      icon: Package,
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Total Orders',
-      value: stats.totalOrders,
-      icon: ShoppingCart,
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Low Stock Items',
-      value: stats.lowStockItems,
-      icon: AlertTriangle,
-      color: 'bg-red-500'
-    },
-    {
-      title: 'Total Sales',
-      value: `$${stats.totalSales.toFixed(2)}`,
-      icon: TrendingUp,
-      color: 'bg-purple-500'
-    }
+    { title: 'Total Products', value: stats.totalProducts, icon: Package, color: 'bg-blue-500' },
+    { title: 'Total Orders', value: stats.totalOrders, icon: ShoppingCart, color: 'bg-green-500' },
+    { title: 'Low Stock Items', value: stats.lowStockItems, icon: AlertTriangle, color: 'bg-red-500' },
+    { title: 'Total Sales', value: `₹${stats.totalSales.toFixed(2)}`, icon: TrendingUp, color: 'bg-purple-500' }
   ];
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-      
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Admin Dashboard</h1>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((stat, index) => {
+        {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
-            <div key={index} className="card">
+            <div key={i} className="card">
               <div className="flex items-center">
                 <div className={`${stat.color} p-3 rounded-lg text-white mr-4`}>
                   <Icon className="h-6 w-6" />

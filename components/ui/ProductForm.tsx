@@ -127,13 +127,18 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
             >
               <option value="">Select Category</option>
-              <option value="electronics">Electronics</option>
-              <option value="clothing">Clothing</option>
-              <option value="books">Books</option>
-              <option value="home">Home & Garden</option>
-              <option value="sports">Sports</option>
+              <option value="Indoor Plants">Indoor Plants</option>
+              <option value="Outdoor Plants">Outdoor Plants</option>
+              <option value="Flowering Plants">Flowering Plants</option>
+              <option value="Succulents">Succulents</option>
+              <option value="Ferns">Ferns</option>
+              <option value="Herbs">Herbs</option>
+              <option value="Tropical Plants">Tropical Plants</option>
+              <option value="Trailing Plants">Trailing Plants</option>
+              <option value="Medicinal Plants">Medicinal Plants</option>
             </select>
           </div>
+
 
           <div>
             <div className="flex justify-between items-center mb-1">

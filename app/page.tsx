@@ -42,10 +42,6 @@ export default function Landing() {
                 Sign&nbsp;In
               </Link>
             )}
-
-            <Link href="/admin" className="hover:text-green-600 transition-colors">
-              Admin
-            </Link>
           </nav>
         </div>
       </header>

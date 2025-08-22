@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { useState, useEffect } from 'react';
 import { Eye, Download, Filter } from 'lucide-react';
 import { Order } from '@/types';
@@ -48,7 +49,7 @@ export default function OrdersPage() {
 
   const downloadInvoice = async (orderId: string) => {
     try {
-      const response = await fetch(`/api/admin/orders/invoice?orderId=${orderId}`);
+      const response = await fetch(`/api/admin/orders?orderId=${orderId}`);
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
